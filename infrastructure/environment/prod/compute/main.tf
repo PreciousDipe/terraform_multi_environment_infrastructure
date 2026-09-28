@@ -11,7 +11,7 @@ locals {
   common_tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
-    Project     = "multi-env-assignment"
+    Project     = "terraform-multi-environment"
     Layer       = "compute"
   }
 }
