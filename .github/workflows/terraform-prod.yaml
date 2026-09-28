@@ -34,7 +34,7 @@ jobs:
 
   database:
     needs: networking
-    uses: ./.github/workflows/terraform.yml
+    uses: ./.github/workflows/terraform.yaml
     secrets: inherit
     with:
       layer: database
@@ -45,7 +45,7 @@ jobs:
 
   compute:
     needs: database
-    uses: ./.github/workflows/terraform.yml
+    uses: ./.github/workflows/terraform.yaml
     secrets: inherit
     with:
       layer: compute
