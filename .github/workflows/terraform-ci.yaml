@@ -14,7 +14,7 @@ on:
       - ".github/workflows/terraform.yml"
   pull_request:
     branches:
-      - patch/*
+      - "patch/*"
     paths:
       - "environment/**"
       - "modules/**"
