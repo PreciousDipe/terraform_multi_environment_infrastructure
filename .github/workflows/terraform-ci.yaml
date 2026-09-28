@@ -1,0 +1,91 @@
+name: Terraform CI
+
+on:
+  push:
+    branches:
+      - "develop"
+      - "staging"
+      - "production"
+    paths:
+      - "environment/**"
+      - "modules/**"
+      - "scripts/**"
+      - ".github/workflows/terraform-ci.yml"
+      - ".github/workflows/terraform.yml"
+  pull_request:
+    branches:
+      - patch/*
+    paths:
+      - "environment/**"
+      - "modules/**"
+      - "scripts/**"
+      - ".github/workflows/terraform-ci.yml"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  resolve-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env_key: ${{ steps.resolve.outputs.env_key }}
+      github_environment: ${{ steps.resolve.outputs.github_environment }}
+      runner: ${{ steps.resolve.outputs.runner }}
+      layers: ${{ steps.resolve.outputs.layers }}
+    steps:
+      - id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PUSH_REF_NAME: ${{ github.ref_name }}
+        run: |
+          # ── PRODUCTION DRY RUN ──
+          if { [ "$EVENT_NAME" = "pull_request" ] && [ "$PR_BASE_REF" = "main" ]; } \
+             || { [ "$EVENT_NAME" = "push" ] && [[ "$PUSH_REF_NAME" == dbrequest/* ]]; }; then
+            
+            echo "env_key=prod" >> "$GITHUB_OUTPUT"
+            echo "github_environment=production" >> "$GITHUB_OUTPUT"
+            echo "runner=ubuntu-latest" >> "$GITHUB_OUTPUT"
+            echo 'layers=["networking","database","compute"]' >> "$GITHUB_OUTPUT"
+
+          # ── STAGING DRY RUN ──
+          elif { [ "$EVENT_NAME" = "pull_request" ] && [ "$PR_BASE_REF" = "staging" ]; } \
+             || { [ "$EVENT_NAME" = "push" ] && [[ "$PUSH_REF_NAME" == staging/* ]]; }; then
+            
+            echo "env_key=staging" >> "$GITHUB_OUTPUT"
+            echo "github_environment=staging" >> "$GITHUB_OUTPUT"
+            echo "runner=ubuntu-latest" >> "$GITHUB_OUTPUT"
+            echo 'layers=["networking","database","compute"]' >> "$GITHUB_OUTPUT"
+
+          # ── DEVELOPMENT DRY RUN ──
+          elif { [ "$EVENT_NAME" = "pull_request" ] && [ "$PR_BASE_REF" = "develop" ]; } \
+             || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            
+            echo "env_key=dev" >> "$GITHUB_OUTPUT"
+            echo "github_environment=develop" >> "$GITHUB_OUTPUT"
+            echo "runner=ubuntu-latest" >> "$GITHUB_OUTPUT"
+            echo 'layers=["networking","database","compute"]' >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Unhandled trigger context: event=$EVENT_NAME base=$PR_BASE_REF ref=$PUSH_REF_NAME"
+            exit 1
+          fi
+
+  plan:
+    needs: resolve-env
+    strategy:
+      fail-fast: true
+      max-parallel: 1 # Runs sequentially to ensure dependency order (network -> db -> compute)
+      matrix:
+        layer: ${{ fromJson(needs.resolve-env.outputs.layers) }}
+    uses: ./.github/workflows/_terraform-layer.yml
+    secrets: inherit
+    with:
+      layer: ${{ matrix.layer }}
+      env_key: ${{ needs.resolve-env.outputs.env_key }}
+      github_environment: ${{ needs.resolve-env.outputs.github_environment }}
+      runner: ${{ needs.resolve-env.outputs.runner }}
+      apply: false # This guarantees the pipeline ONLY generates plans and NEVER alters infrastructure

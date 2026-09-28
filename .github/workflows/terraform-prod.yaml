@@ -1,0 +1,55 @@
+name: "Terraform Deploy (prod)"
+
+on:
+  push:
+    branches:
+      - production
+    paths-ignore:
+      - "README*"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "apply (default) or plan-only"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - plan-only
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  networking:
+    uses: ./.github/workflows/terraform.yml
+    secrets: inherit
+    with:
+      layer: networking
+      env_key: prod
+      github_environment: production
+      runner: ubuntu-latest
+      apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
+
+  database:
+    needs: networking
+    uses: ./.github/workflows/terraform.yml
+    secrets: inherit
+    with:
+      layer: database
+      env_key: prod
+      github_environment: production
+      runner: ubuntu-latest
+      apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
+
+  compute:
+    needs: database
+    uses: ./.github/workflows/terraform.yml
+    secrets: inherit
+    with:
+      layer: compute
+      env_key: prod
+      github_environment: production
+      runner: ubuntu-latest
+      apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
