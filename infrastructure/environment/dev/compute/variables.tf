@@ -16,7 +16,7 @@ variable "environment" {
 variable "state_bucket" {
   description = "S3 bucket holding the Terraform state files (used to read upstream layers)"
   type        = string
-  default     = "yourname-tf-state-multi-env"
+  default     = "terraform-platform-state-bucket-all-environment"
 }
 
 variable "instance_type" {
