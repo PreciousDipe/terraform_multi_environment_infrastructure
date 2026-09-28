@@ -12,6 +12,8 @@ desired_capacity     = 2
 max_size             = 4
 min_size             = 1
 ami_id               = "ami-0c7217cdde317cfec"
+
+allowed_ingress_cidrs = ["0.0.0.0/0"]
 EOF
 
 echo "Generated terraform.tfvars for compute:"

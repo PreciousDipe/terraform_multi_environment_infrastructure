@@ -53,6 +53,7 @@ variable "desired_capacity" {
 variable "allowed_ingress_cidrs" {
   description = "CIDR blocks allowed to reach instances on the app port"
   type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
 
 variable "app_port" {
