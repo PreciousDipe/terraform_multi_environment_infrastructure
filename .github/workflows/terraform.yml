@@ -1,13 +1,5 @@
 name: Terraform Layer Worker
 
-# Reusable per-layer runner for the different environment/<env_key>/<layer> roots, parameterised by
-# environment. Called by parent orchestrator workflows.
-#
-# env_key selects both the backend config and the tfvars generator (bash/<env_key>/<layer>-tfvars.sh).
-#
-# All TF_VAR_* are set below; a layer silently ignores the ones it does not
-# declare. Values resolve against the GitHub environment named by `github_environment`.
-
 on:
   workflow_call:
     inputs:
