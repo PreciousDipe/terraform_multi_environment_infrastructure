@@ -13,11 +13,12 @@ on:
         type: boolean
         default: false
       env_key:
-        description: "prod | dev | staging"
+        description: "Folder under infrastructure/environment: prod | dev | staging"
         required: false
         type: string
+        default: "prod"
       github_environment:
-        description: "GitHub Environment holding the secret set"
+        description: "GitHub Environment name (must match IAM trust policy): production | develop | staging"
         required: true
         type: string
       runner:
@@ -53,6 +54,17 @@ jobs:
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
+
+      - name: Debug OIDC claims (temporary)
+        working-directory: ${{ github.workspace }}
+        run: |
+          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+          PAYLOAD=$(echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+')
+          while [ $(( ${#PAYLOAD} % 4 )) -ne 0 ]; do PAYLOAD="${PAYLOAD}="; done
+          echo "$PAYLOAD" | base64 -d | jq '{sub, aud, iss, repository, repository_owner, ref, environment, job_workflow_ref}'
+          echo "Role ARN (spaced to defeat masking):"
+          echo "$AWS_ROLE_ARN" | sed 's/./& /g'
 
       - name: Authenticate to AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v6
