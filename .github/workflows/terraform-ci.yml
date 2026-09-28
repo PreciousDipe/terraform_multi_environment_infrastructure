@@ -14,9 +14,7 @@ on:
       - ".github/workflows/terraform.yml"
   pull_request:
     branches:
-      - develop
-      - staging
-      - production
+      - patch/*
     paths:
       - "environment/**"
       - "modules/**"
@@ -62,7 +60,7 @@ jobs:
             echo "github_environment=staging" >> "$GITHUB_OUTPUT"
             echo "runner=ubuntu-latest" >> "$GITHUB_OUTPUT"
             echo 'layers=["networking","database","compute"]' >> "$GITHUB_OUTPUT"
-            
+
           # ── DEVELOPMENT DRY RUN ──
           elif { [ "$EVENT_NAME" = "pull_request" ] && [ "$PR_BASE_REF" = "develop" ]; } \
              || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
