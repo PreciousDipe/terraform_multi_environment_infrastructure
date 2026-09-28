@@ -1,0 +1,96 @@
+name: "Terraform Layer Worker"
+
+on:
+  workflow_call:
+    inputs:
+      layer:
+        description: "networking | database | compute"
+        required: true
+        type: string
+      apply:
+        description: "Run terraform apply after a successful plan"
+        required: false
+        type: boolean
+        default: false
+      env_key:
+        description: "prod | dev | staging"
+        required: false
+        type: string
+        default: "prod"
+      github_environment:
+        description: "GitHub Environment holding the secret set"
+        required: true
+        type: string
+        default: "production"
+      runner:
+        description: "runs-on label"
+        required: false
+        type: string
+        default: "ubuntu-latest"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VERSION: "1.5.0"
+  TF_IN_AUTOMATION: "true"
+
+  # AWS Deployment Role (OIDC Connection Setup)
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  AWS_REGION: "us-east-1"
+
+  # Database Engine Secrets
+  TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+jobs:
+  terraform:
+    name: "${{ inputs.env_key }}/${{ inputs.layer }}${{ inputs.apply && ' apply' || ' plan' }}"
+    runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.github_environment }}
+    defaults:
+      run:
+        working-directory: "infrastructure/environment/${{ inputs.env_key }}/${{ inputs.layer }}"
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Authenticate to AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Generate Variable Sets (tfvars)
+        working-directory: ${{ github.workspace }}
+        run: |
+          chmod +x infrastructure/script/${{ inputs.env_key }}/${{ inputs.layer }}-tfvars.sh
+          bash "infrastructure/script/${{ inputs.env_key }}/${{ inputs.layer }}-tfvars.sh"
+          mv terraform.tfvars "infrastructure/environment/${{ inputs.env_key }}/${{ inputs.layer }}/terraform.tfvars"
+
+      - name: Setup Terraform Binary
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform Init (Using tf-init wrapper strategy)
+        working-directory: ${{ github.workspace }}
+        run: |
+          chmod +x infrastructure/script/tf-init.sh
+          bash infrastructure/script/tf-init.sh ${{ inputs.env_key }} ${{ inputs.layer }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan Execution
+        run: terraform plan -input=false -lock-timeout=5m -out=tfplan
+
+      - name: Terraform Apply Execution
+        if: ${{ inputs.apply }}
+        run: terraform apply -input=false -lock-timeout=5m -auto-approve tfplan
