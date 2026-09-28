@@ -55,17 +55,6 @@ jobs:
       - name: Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: Debug OIDC claims (temporary)
-        working-directory: ${{ github.workspace }}
-        run: |
-          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-          PAYLOAD=$(echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+')
-          while [ $(( ${#PAYLOAD} % 4 )) -ne 0 ]; do PAYLOAD="${PAYLOAD}="; done
-          echo "$PAYLOAD" | base64 -d | jq '{sub, aud, iss, repository, repository_owner, ref, environment, job_workflow_ref}'
-          echo "Role ARN (spaced to defeat masking):"
-          echo "$AWS_ROLE_ARN" | sed 's/./& /g'
-
       - name: Authenticate to AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -92,7 +81,8 @@ jobs:
           bash infrastructure/script/tf-init.sh ${{ inputs.env_key }} ${{ inputs.layer }}
 
       - name: Terraform Format Check
-        run: terraform fmt -check -recursive
+        working-directory: ${{ github.workspace }}
+        run: terraform fmt -check -recursive -diff infrastructure
         continue-on-error: true
 
       - name: Terraform Validate
