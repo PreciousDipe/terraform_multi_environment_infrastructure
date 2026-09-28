@@ -16,12 +16,10 @@ on:
         description: "prod | dev | staging"
         required: false
         type: string
-        default: "prod"
       github_environment:
         description: "GitHub Environment holding the secret set"
         required: true
         type: string
-        default: "production"
       runner:
         description: "runs-on label"
         required: false
