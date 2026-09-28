@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   networking:
-    uses: ./.github/workflows/terraform.yml
+    uses: ./.github/workflows/terraform.yaml
     secrets: inherit
     with:
       layer: networking
