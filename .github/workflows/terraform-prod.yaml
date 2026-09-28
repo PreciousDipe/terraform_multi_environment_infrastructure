@@ -32,24 +32,24 @@ jobs:
       runner: ubuntu-latest
       apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
 
-  database:
+  compute:
     needs: networking
     uses: ./.github/workflows/terraform.yaml
     secrets: inherit
     with:
-      layer: database
-      env_key: prod
-      github_environment: production
+      layer: compute
+      env_key: dev
+      github_environment: develop
       runner: ubuntu-latest
       apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
 
-  compute:
-    needs: database
+  database:
+    needs: compute
     uses: ./.github/workflows/terraform.yaml
     secrets: inherit
     with:
-      layer: compute
-      env_key: prod
-      github_environment: production
+      layer: database
+      env_key: dev
+      github_environment: develop
       runner: ubuntu-latest
       apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
