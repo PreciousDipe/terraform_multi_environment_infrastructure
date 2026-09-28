@@ -53,5 +53,3 @@ jobs:
       github_environment: develop
       runner: ubuntu-latest
       apply: ${{ github.event_name == 'push' || inputs.action == 'apply' }}
-
-  
