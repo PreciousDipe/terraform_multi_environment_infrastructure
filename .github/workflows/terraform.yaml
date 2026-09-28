@@ -91,6 +91,6 @@ jobs:
       - name: Terraform Plan Execution
         run: terraform plan -input=false -lock-timeout=5m -out=tfplan
 
-      - name: Terraform Apply Execution
-        if: ${{ inputs.apply }}
-        run: terraform apply -input=false -lock-timeout=5m -auto-approve tfplan
+      # - name: Terraform Apply Execution
+      #   if: ${{ inputs.apply }}
+      #   run: terraform apply -input=false -lock-timeout=5m -auto-approve tfplan
