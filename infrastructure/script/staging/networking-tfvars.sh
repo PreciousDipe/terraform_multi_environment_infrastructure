@@ -4,8 +4,8 @@ set -euo pipefail
 
 cat > terraform.tfvars <<'EOF'
 # ── Network Layout Configuration ──────────────────────────────────────────────
-region               = "us-east-1"
-environment          = "prod"
+region      = "us-east-1"
+environment = "staging"
 
 vpc_cidr             = "10.0.0.0/16"
 az_count             = 2
