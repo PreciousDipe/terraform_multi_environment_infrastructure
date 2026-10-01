@@ -10,13 +10,13 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "tf_state" {
-  bucket = var.state_bucket_name 
+  bucket = var.state_bucket_name
   lifecycle { prevent_destroy = true }
 }
 
 resource "aws_s3_bucket_versioning" "tf_state" {
   bucket = aws_s3_bucket.tf_state.id
-  versioning_configuration { status = "Enabled" } 
+  versioning_configuration { status = "Enabled" }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "tf_state" {
