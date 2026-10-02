@@ -1,9 +1,10 @@
 # Terraform Multi-Environment Infrastructure
 
 Terraform code that builds the same three-tier AWS network (networking → compute → database) for **dev**, **staging** and **prod**. GitHub Actions deploys it, and each layer's state is stored remotely in S3.
-
+### Architecture Diagram
 ![Architecture diagram](terraform-architecture.png)
 
+### Terraform plan image
 ![Terraform plan](terraform-plan.png)
 ---
 
@@ -116,7 +117,4 @@ infrastructure/
 │   └── <dev|staging|prod>/<networking|compute|database>/   # one root module + backend per layer
 └── script/
     └── <dev|staging|prod>/<layer>-tfvars.sh               # generates terraform.tfvars
-docs/
-├── architecture.svg        # diagram source
-└── architecture.png        # rendered diagram
 ```
