@@ -4,8 +4,8 @@ set -euo pipefail
 
 cat > terraform.tfvars <<'EOF'
 # ── Database Layer Configuration ──────────────────────────────────────────────
-region                 = "us-east-1"
-environment            = "prod"
+region      = "us-east-1"
+environment = "prod"
 
 db_engine_version      = "15.4"
 db_instance_class      = "db.t3.medium"
